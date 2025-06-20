@@ -1,0 +1,9 @@
+# Ignore everything
+*
+# But these files
+!.gitignore
+!.gitattributes
+!readme.MD
+!LICENSE
+# And the src subdirectory
+!src/

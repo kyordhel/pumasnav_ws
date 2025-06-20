@@ -1,0 +1,14 @@
+# Ignore everything
+*
+# But these files
+!.gitignore
+!.gitattributes
+!readme.MD
+!LICENSE
+!CMakeLists.txt
+!package.xml
+# And these filetypes
+!*.msg
+!*.srv
+# Even if they are in subdirectories
+!**/
