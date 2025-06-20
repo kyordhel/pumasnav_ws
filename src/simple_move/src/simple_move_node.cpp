@@ -147,7 +147,7 @@ void callback_rejection_force(const Vector3Ptr msg)
     rejection_force = *msg;
 }
 
-geometry_msgs::msg::Twist calculate_speeds(float robot_x, float robot_y, float robot_t, float goal_x, float goal_y,float min_linear_speed, float max_linear_speed, float angular_speed, float alpha, float beta, bool backwards, bool lateral, bool use_pot_fields=false, double rejection_force_y=0)
+Twist calculate_speeds(float robot_x, float robot_y, float robot_t, float goal_x, float goal_y,float min_linear_speed, float max_linear_speed, float angular_speed, float alpha, float beta, bool backwards, bool lateral, bool use_pot_fields=false, double rejection_force_y=0)
 {
     float angle_error = 0;
     if(backwards) angle_error = (atan2(robot_y - goal_y, robot_x -goal_x)-robot_t);
@@ -173,13 +173,13 @@ geometry_msgs::msg::Twist calculate_speeds(float robot_x, float robot_y, float r
     return result;
 }
 
-geometry_msgs::msg::Twist calculate_speeds(float robot_angle, float goal_angle, float angular_speed, float beta, bool move_lat)
+Twist calculate_speeds(float robot_angle, float goal_angle, float angular_speed, float beta, bool move_lat)
 {
     float angle_error = goal_angle - robot_angle;
     if(angle_error >   M_PI) angle_error -= 2*M_PI;
     if(angle_error <= -M_PI) angle_error += 2*M_PI;
 
-    geometry_msgs::msg::Twist result;
+    Twist result;
     result.linear.x  = 0;
     result.angular.z = angular_speed * (2 / (1 + exp(-angle_error / beta)) - 1);
     return result;
@@ -248,9 +248,9 @@ void get_next_goal_from_path(float robot_x, float robot_y, float robot_t, float&
     }while(error < 0.25 && ++next_pose_idx < goal_path.poses.size());
 }
 
-std_msgs::msg::Float64MultiArray get_next_goal_head_angles(float robot_x, float robot_y, float robot_t, int next_pose_idx)
+Float64MA get_next_goal_head_angles(float robot_x, float robot_y, float robot_t, int next_pose_idx)
 {
-    std_msgs::msg::Float64MultiArray msg;
+    Float64MA msg;
     int idx = next_pose_idx + 5 >=  goal_path.poses.size() - 1 ? goal_path.poses.size() - 1 : next_pose_idx + 5;
     float goal_x = goal_path.poses[idx].pose.position.x;
     float goal_y = goal_path.poses[idx].pose.position.y;
@@ -347,7 +347,7 @@ int main(int argc, char** argv)
     auto pub_cmd_vel          = n->create_publisher<Twist>("/cmd_vel", 1);
     auto pub_head_goal_pose   = n->create_publisher<Float64MA>("/hardware/head/goal_pose", 1);
 
-    actionlib_msgs::msg::GoalStatus msg_goal_reached;
+    GoalStatus msg_goal_reached;
     int state = SM_INIT;
     float current_linear_speed = 0;
     float robot_x = 0;
@@ -369,8 +369,8 @@ int main(int argc, char** argv)
         {
             stop = false;
             state = SM_INIT;
-            msg_goal_reached.status = actionlib_msgs::msg::GoalStatus::ABORTED;
-            pub_cmd_vel->publish(geometry_msgs::msg::Twist());
+            msg_goal_reached.status = GoalStatus::ABORTED;
+            pub_cmd_vel->publish(Twist());
             pub_goal_reached->publish(msg_goal_reached);
         }
         if(new_pose || new_path)
@@ -402,7 +402,7 @@ int main(int argc, char** argv)
                 next_pose_idx = 0;
                 global_goal_x = goal_path.poses[goal_path.poses.size() - 1].pose.position.x;
                 global_goal_y = goal_path.poses[goal_path.poses.size() - 1].pose.position.y;
-                std::stringstream ss;
+                // std::stringstream ss;
                 // ss << msg->header.frame_id;
                 // ss >> msg_goal_reached.goal_id.id;
                 attempts = (int)(get_path_total_distance(goal_path)/max_linear_speed*4*RATE + 5*RATE);
@@ -493,9 +493,9 @@ int main(int argc, char** argv)
         case SM_GOAL_POSE_FINISH:
             std::cout << "SimpleMove.->Successful move with dist=" << goal_distance << " angle=" << goal_angle << std::endl;
             state = SM_INIT;
-            msg_goal_reached.status = actionlib_msgs::msg::GoalStatus::SUCCEEDED;
+            msg_goal_reached.status = GoalStatus::SUCCEEDED;
             pub_goal_reached->publish(msg_goal_reached);
-            pub_cmd_vel->publish(geometry_msgs::msg::Twist());
+            pub_cmd_vel->publish(Twist());
             current_linear_speed = 0;
             break;
 
@@ -503,9 +503,9 @@ int main(int argc, char** argv)
         case SM_GOAL_POSE_FAILED:
             std::cout << "SimpleMove.->FAILED move with dist=" << goal_distance << " angle=" << goal_angle << std::endl;
             state = SM_INIT;
-            msg_goal_reached.status = actionlib_msgs::msg::GoalStatus::ABORTED;
+            msg_goal_reached.status = GoalStatus::ABORTED;
             pub_goal_reached->publish(msg_goal_reached);
-            pub_cmd_vel->publish(geometry_msgs::msg::Twist());
+            pub_cmd_vel->publish(Twist());
             current_linear_speed = 0;
             break;
 
@@ -513,7 +513,7 @@ int main(int argc, char** argv)
         case SM_GOAL_PATH_ACCEL:
             if(collision_risk)
             {
-                pub_cmd_vel->publish(geometry_msgs::msg::Twist());
+                pub_cmd_vel->publish(Twist());
                 std::cout << "SimpleMove.->WARNING! Collision risk detected!!!!!" << std::endl;
                 state = SM_GOAL_PATH_FAILED;
             }
@@ -549,7 +549,7 @@ int main(int argc, char** argv)
         case SM_GOAL_PATH_CRUISE:
             if(collision_risk)
             {
-                pub_cmd_vel->publish(geometry_msgs::msg::Twist());
+                pub_cmd_vel->publish(Twist());
                 std::cout << "SimpleMove.->WARNING! Collision risk detected!!!!!" << std::endl;
                 state = SM_GOAL_PATH_FAILED;
             }
@@ -580,7 +580,7 @@ int main(int argc, char** argv)
         case SM_GOAL_PATH_DECCEL:
             if(collision_risk)
             {
-                pub_cmd_vel->publish(geometry_msgs::msg::Twist());
+                pub_cmd_vel->publish(Twist());
                 std::cout << "SimpleMove.->WARNING! Collision risk detected!!!!!" << std::endl;
                 state = SM_GOAL_PATH_FAILED;
             }
@@ -608,9 +608,9 @@ int main(int argc, char** argv)
         case SM_GOAL_PATH_FINISH:
             std::cout << "SimpleMove.->Path succesfully followed." << std::endl;
             state = SM_INIT;
-            msg_goal_reached.status = actionlib_msgs::msg::GoalStatus::SUCCEEDED;
+            msg_goal_reached.status = GoalStatus::SUCCEEDED;
             pub_goal_reached->publish(msg_goal_reached);
-            pub_cmd_vel->publish(geometry_msgs::msg::Twist());
+            pub_cmd_vel->publish(Twist());
             current_linear_speed = 0;
             break;
 
@@ -618,9 +618,9 @@ int main(int argc, char** argv)
         case SM_GOAL_PATH_FAILED:
             std::cout << "SimpleMove.->FAILED path traking." << std::endl;
             state = SM_INIT;
-            msg_goal_reached.status = actionlib_msgs::msg::GoalStatus::ABORTED;
+            msg_goal_reached.status = GoalStatus::ABORTED;
             pub_goal_reached->publish(msg_goal_reached);
-            pub_cmd_vel->publish(geometry_msgs::msg::Twist());
+            pub_cmd_vel->publish(Twist());
             current_linear_speed = 0;
             break;
 
