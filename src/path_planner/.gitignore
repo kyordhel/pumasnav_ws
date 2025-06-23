@@ -5,9 +5,8 @@
 !.gitattributes
 !readme.MD
 !LICENSE
-# And these filetypes
+!CMakeLists.txt
+!package.xml
 # And these subdirectories
-!graph_msgs/
-!navig_msgs/
-!simple_move/
-!path_planner/
+!include/
+!src/
