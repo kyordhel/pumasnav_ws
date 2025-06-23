@@ -9,4 +9,12 @@ find_package(graph_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "srv/PlanPath.srv"
+  "srv/GetGoalPoint.srv"
+  "srv/GetInflatedMap.srv"
+  "srv/GetBoundaryPoints.srv"
+  DEPENDENCIES std_msgs nav_msgs geometry_msgs graph_msgs
+)
+
 ament_package()
